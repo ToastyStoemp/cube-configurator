@@ -33,3 +33,23 @@ This is a static site with local, relative asset paths, including its vendored T
 Run `node build-site.cjs` to prepare the same static output locally. The repository has not been published automatically.
 
 Browser autosaves are local to each origin. Export your local design as JSON before moving to the hosted URL, then open it there. Design files are not uploaded by the app.
+
+## Booth planning tools
+
+Open Products, prints & signs in Build & style to create dimensioned items with optional artwork, or import/export a product library. Products mode drags items horizontally at their chosen base height, including shelf or hanging heights. Artwork preserves its proportions. Product geometry is a simple box preview; physical hanging and stability are not simulated.
+
+Select panels and use Move to drag the section across the table; enable Duplicate while moving to copy it. Raise/lower moves half a grid height. Table edges snap within 3 cm with a configurable inset; turn snapping off for grid-only movement. Movement rejects overlapping panels and is one undo step. Product positions are independent of panel sections.
+
+Print setup sheet opens the browser print dialog: use Save as PDF for a portable sheet. It includes numbered vector front/top panel views, a numbered parts list, connector count and product dimensions/positions. Dense views can have overlapping numbers; the parts table identifies every panel.
+
+## Surface placement and accessories
+
+Products mode raycasts the actual grid panels: horizontal shelves support the item at its base; vertical panels orient it outwards. Away from panels it moves horizontally at its existing base height. This is visual placement rather than a mechanical attachment or load check.
+
+Choose Metal display hook or Tiered acrylic stand in the product form. Width/height/depth are editable and acrylic stands support 1–8 tiers. Shapes are generic adjustable references, not verified Amazon models. The Amazon links supplied lacked accessible product details.
+
+Open display-stand editor launches a bundled local editor in a dialog. Open a saved display-stand JSON there or design a new stand, then choose Add current stand to booth. Actual triangulated geometry is transferred in cm and included in booth saves and product libraries. Transfers are snapshots; re-edit in the embedded editor and transfer again to update the shape. Imported geometry dimensions can also be scaled in the booth product form. The bundled editor is independent of the original project's server and works on GitHub Pages.
+
+### Item palette
+
+Drag cards from Products, Hooks, Acrylic, or Custom onto the 3D display. Hooks offer 5/10/15/20 cm presets and attach to vertical panels; acrylic stands offer 2–5 levels and attach to horizontal panels or the tabletop. The full-size preview shows placement before release; Escape cancels. Use Create / edit an item for dimensions, artwork, import/export, and removal. Transferred custom stands retain their colors and appear as reusable cards. Preset dimensions are editable starting points.
