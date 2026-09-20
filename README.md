@@ -26,7 +26,7 @@ Choose material samples and colour swatches before building. Select mode support
 
 This is a static site with local, relative asset paths, including its vendored Three.js library. It works under a repository subpath without a server-side application or npm install.
 
-1. Create a GitHub repository and push this folder to its `main` branch.
+1. Create a GitHub repository and push this folder to its `main` or `master` branch.
 2. In Settings → Pages, choose **GitHub Actions** as the publishing source.
 3. The included Publish Cube Studio workflow tests the code, packages only public site files into `_site`, and deploys. Pull requests run checks without publishing. You can also start the workflow manually.
 
