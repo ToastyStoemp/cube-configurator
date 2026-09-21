@@ -123,3 +123,6 @@ canvas.addEventListener('pointerup',e=>{if(!paintStroke||e.pointerId!==paintStro
 canvas.addEventListener('pointercancel',()=>finishPaint(true));canvas.addEventListener('lostpointercapture',()=>finishPaint(true));window.addEventListener('blur',()=>finishPaint(true));window.addEventListener('keydown',e=>{if(!paintStroke)return;if(e.key==='Escape'||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z')){e.preventDefault();e.stopImmediatePropagation();finishPaint(true);}},true);
 
 new ResizeObserver(()=>{const r=$('#viewer').getBoundingClientRect();renderer.setSize(r.width,r.height);updateCamera();}).observe($('#viewer'));render();fit();
+
+// Kit presets change all grid dimensions in one undoable edit.
+document.querySelectorAll('[data-grid-size]').forEach(button=>button.onclick=()=>{change(()=>{state.width=Number(button.dataset.gridSize);state.height=30;state.depth=30;},'Kit dimensions updated. Undo restores the previous size.');fit();});

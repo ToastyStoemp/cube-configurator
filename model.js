@@ -24,7 +24,7 @@ function inventory(state){
  return {panels:list.length,full:list.filter(p=>(p.u||1)*(p.v||1)===1).length,half:list.filter(p=>(p.u||1)*(p.v||1)===.5).length,connectors:corners.size,rows:[...rows.values()],unsupported};
 }
 const panelKey=p=>`${p.type}:${p.x},${p.y},${p.z}:${p.u||1},${p.v||1}`;
-function vertices(p){const out=[];for(const a of [0,p.u||1])for(const b of [0,p.v||1])out.push(p.type==='side'?[p.x,p.y+a,p.z+b]:p.type==='shelf'?[p.x+a,p.y,p.z+b]:[p.x+a,p.y+b,p.z]);return out;}
+function vertices(p){const out=[];for(const a of [0,p.u||1])for(const b of [0,p.v||1])out.push(p.type==='side'?[p.x,p.y+b,p.z+a]:p.type==='shelf'?[p.x+a,p.y,p.z+b]:[p.x+a,p.y+b,p.z]);return out;}
 function alignTable(state,table,edge){
  const points=state.panels.flatMap(vertices),xs=points.length?points.map(v=>v[0]*state.width):[0,state.width],zs=points.length?points.map(v=>v[2]*state.depth):[0,state.depth],result={...table};
  if(edge==='left')result.x=Math.min(...xs)+table.width/2;
