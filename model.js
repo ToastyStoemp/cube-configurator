@@ -17,7 +17,7 @@ function panels(state){
 }
 function inventory(state){
  const list=panels(state),rows=new Map(),corners=new Set();
- for(const p of list){const dims=p.type==='side'?[state.depth*(p.u||1),state.height*(p.v||1)]:p.type==='shelf'?[state.width*(p.u||1),state.depth*(p.v||1)]:[state.width*(p.u||1),state.height*(p.v||1)],id=[p.type,...dims,p.material,p.color].join('|');const row=rows.get(id)||{type:p.type,dims,material:p.material,color:p.color,count:0};row.count++;rows.set(id,row);
+ for(const p of list){const dims=p.type==='side'?[state.depth*(p.u||1),state.height*(p.v||1)]:p.type==='shelf'?[state.width*(p.u||1),state.depth*(p.v||1)]:[state.width*(p.u||1),state.height*(p.v||1)],id=[...dims.sort((a,b)=>b-a),p.material].join('|');const row=rows.get(id)||{dims,material:p.material,count:0};row.count++;rows.set(id,row);
  for(const v of vertices(p))corners.add(v.join(','));
  }
  const unsupported=(state.cubes||[]).filter(c=>c.y>0&&!state.cubes.some(q=>q.x===c.x&&q.y===c.y-1&&q.z===c.z)).length;
