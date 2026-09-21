@@ -23,9 +23,10 @@
     }
     return '';
   }
-  function candidate(G,s,p,point,others,products,ignoreId=null,step=1){
+  function candidate(G,s,p,point,others,products,ignoreId=null,step=1,backOnly=false){
     const b=limits(G,s,p),snap=v=>step?Math.round(v/step)*step:v;
     const position={x:Math.max(b.minX,Math.min(b.maxX,snap(point.x))),z:Math.max(b.minZ,Math.min(b.maxZ,snap(point.z)))};
+    if(backOnly)position.z=b.minZ;
     if(step){
       const nearby=others.filter(item=>item.id!==ignoreId),radius=Math.max(4,Math.min(8,step)),xs=[b.minX,b.maxX],zs=[b.minZ,b.maxZ],alongside=[];
       for(const item of nearby){
@@ -35,7 +36,7 @@
         // pointer is beside an item, prefer its row over those closer slots.
         for(const x of [item.x-(p.width+q.width)/2-gap,item.x+(p.width+q.width)/2+gap]){
           for(const z of [item.z,item.z+(q.depth-p.depth)/2,item.z-(q.depth-p.depth)/2]){
-            if(Math.abs(x-point.x)<=radius&&Math.abs(z-point.z)<=radius&&!valid(G,s,p,{x,z},others,products,ignoreId))alongside.push({x,z,distance:Math.hypot(x-point.x,z-point.z)});
+            if((!backOnly||Math.abs(z-b.minZ)<1e-5)&&Math.abs(x-point.x)<=radius&&Math.abs(z-point.z)<=radius&&!valid(G,s,p,{x,z},others,products,ignoreId))alongside.push({x,z,distance:Math.hypot(x-point.x,z-point.z)});
           }
         }
         xs.push(item.x-(p.width+q.width)/2-gap,item.x+(p.width+q.width)/2+gap,item.x,item.x+(q.width-p.width)/2,item.x-(q.width-p.width)/2);
@@ -44,7 +45,7 @@
       // These edge and neighbour coordinates also form the slots searched by firstSpace.
       const close=(values,value)=>[...new Set(values)].filter(v=>Math.abs(v-value)<=radius).sort((a,b)=>Math.abs(a-value)-Math.abs(b-value)).slice(0,8);
       const candidates=[];
-      for(const x of [...close(xs,point.x),position.x])for(const z of [...close(zs,point.z),position.z]){
+      for(const x of [...close(xs,point.x),position.x])for(const z of (backOnly?[b.minZ]:[...close(zs,point.z),position.z])){
         if(!valid(G,s,p,{x,z},others,products,ignoreId))candidates.push({x,z,axes:Number(xs.includes(x))+Number(zs.includes(z)),distance:Math.hypot(x-point.x,z-point.z)});
       }
       candidates.sort((a,b)=>b.axes-a.axes||a.distance-b.distance);

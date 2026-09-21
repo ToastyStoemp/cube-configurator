@@ -41,7 +41,7 @@ test('products preserve dimensions and positions in designs and reject unsafe im
 test('print views include numbered panels, table and product footprints',()=>{const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync('booth-tools.js','utf8'),start=source.indexOf('function planSVG('),end=source.indexOf("$('#printPlan').onclick",start),state=M.migrate(design([cube()]));state.table={enabled:true,width:180,depth:75,height:74,x:0,z:0};state.products=[{x:10,y:0,z:10,width:21,height:29.7,depth:.3}];const ctx=vm.createContext({state,CubeModel:M});vm.runInContext(source.slice(start,end),ctx);for(const top of [true,false]){const svg=vm.runInContext(`planSVG(${top})`,ctx);assert.match(svg,/<svg viewBox=/);assert.match(svg,/>1<\/text>/);assert.match(svg,/fill="#f1d7a4"/);assert.ok(!svg.includes('NaN'));}});
 
 test('accessory dimensions, tiers, rotation and stand mesh survive save/import',()=>{const base={id:'a',name:'Stand',width:30,height:15,depth:24,x:0,y:0,z:0,image:''};for(const kind of ['hook','acrylic','stand']){const p={...base,kind,levels:4,rotation:Math.PI/2,...(kind==='stand'?{mesh:[0,0,0,1,0,0,0,1,0]}:{})};assert.deepEqual(BoothModel.validateProducts([p])[0],p);}assert.throws(()=>BoothModel.validateProducts([{...base,kind:'acrylic',levels:9}]),/levels/);});
-test('surface snapping rests products on shelves and orients them against vertical panels',()=>{const fs=require('node:fs'),vm=require('node:vm'),ctx=vm.createContext({});vm.runInContext(fs.readFileSync('accessories.js','utf8')+';globalThis.views=AccessoryViews;',ctx);const p={height:10,depth:2};const snap=(type,normal)=>ctx.views.snap(p,{object:{userData:{cell:{type}}},face:{normal},point:{x:20,y:30,z:40}});assert.equal(snap('shelf',{y:1}).y,30.3);const back=snap('back',{z:1});assert.equal(back.z,41.3);assert.equal(back.y,25);const side=snap('side',{x:-1});assert.equal(side.x,18.7);assert.equal(side.rotation,-Math.PI/2);});
+test('surface snapping rests products on shelves and orients them against vertical panels',()=>{const fs=require('node:fs'),vm=require('node:vm'),ctx=vm.createContext({});vm.runInContext(fs.readFileSync('display-editor/product-placement.js','utf8'),ctx);vm.runInContext(fs.readFileSync('accessories.js','utf8')+';globalThis.views=AccessoryViews;',ctx);const p={height:10,depth:2};const snap=(type,normal)=>ctx.views.snap(p,{object:{userData:{cell:{type}}},face:{normal},point:{x:20,y:30,z:40}});assert.equal(snap('shelf',{y:1}).y,30.3);const back=snap('back',{z:1});assert.equal(back.z,41.3);assert.equal(back.y,25);const side=snap('side',{x:-1});assert.equal(side.x,18.7);assert.equal(side.rotation,-Math.PI/2);});
 
 test('stand vertex colours round-trip and reject malformed arrays',()=>{const p={id:'stand',name:'Stand',width:30,height:30,depth:30,x:0,y:0,z:0,image:'',kind:'stand',mesh:[0,0,0,1,0,0,0,1,0],meshColors:[1,0,0,0,1,0,0,0,1]};assert.deepEqual(BoothModel.validateProducts([p])[0].meshColors,p.meshColors);assert.throws(()=>BoothModel.validateProducts([{...p,meshColors:[1]}]),/colours/);});
 
@@ -85,3 +85,49 @@ test('stands snap against both corner walls, accounting for rotation and wall ex
 });
 
 test('removing a hook detaches its items without deleting them or mutating undo history',()=>{const hook={id:'h',kind:'hook'},item={id:'p',hookId:'h',hookOffset:2,x:4};const result=BoothModel.removeProduct([hook,item],'h');assert.equal(result.length,1);assert.equal(result[0].id,'p');assert.equal(result[0].hookId,undefined);assert.equal(result[0].x,4);assert.equal(item.hookId,'h');assert.equal(BoothModel.removeProduct([hook,item],'p').length,1);});
+
+
+test('products land on real acrylic and imported stand shelves, including rotated tiers',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),ctx=vm.createContext({console,AbortController});
+ vm.runInContext(fs.readFileSync('three.js','utf8')+';globalThis.T=THREE;',ctx);
+ vm.runInContext(fs.readFileSync('display-editor/product-placement.js','utf8'),ctx);vm.runInContext(fs.readFileSync('accessories.js','utf8')+';globalThis.A=AccessoryViews;',ctx);
+ const T=ctx.T,group=new T.Group(),ray=new T.Raycaster();ctx.productGroup=group;ctx.ray=ray;
+ const source=fs.readFileSync('booth-tools.js','utf8');vm.runInContext(source.slice(source.indexOf('function standTarget('),source.indexOf('function hookTarget(')),ctx);
+ const product={kind:'product',width:5,height:8,depth:1};
+ for(const rotation of [0,Math.PI/2]){
+  group.clear();const stand={id:'s',kind:'acrylic',width:30,height:15,depth:24,levels:3,rotation},g=new T.Group();g.userData.productId='s';g.position.y=7.5;g.rotation.y=rotation;ctx.A.build(g,stand);group.add(g);ctx.state={products:[stand]};
+  ray.set(new T.Vector3(Math.sin(rotation)*8,50,Math.cos(rotation)*8),new T.Vector3(0,-1,0));
+  const hit=ctx.standTarget(product);assert.ok(hit);assert.ok(Math.abs(hit.y-.29)<.001);assert.equal(hit.rotation,rotation);
+  assert.equal(ctx.standTarget({...product,width:40}),null);
+ }
+ group.clear();const mesh=Array.from(new T.BoxGeometry(30,10,20).toNonIndexed().attributes.position.array),stand={id:'custom',kind:'stand',width:30,height:10,depth:20,mesh},g=new T.Group();g.userData.productId='custom';g.position.y=5;ctx.A.build(g,stand);group.add(g);ctx.state={products:[stand]};
+ ray.set(new T.Vector3(0,50,0),new T.Vector3(0,-1,0));const hit=ctx.standTarget(product);assert.ok(hit);assert.ok(Math.abs(hit.y-10.04)<.001);
+ // The floor extends beyond inset side panels; products must stop at inner faces.
+ const floorGeo=new T.BoxGeometry(30,1,20).toNonIndexed(),leftGeo=new T.BoxGeometry(.4,10,20).toNonIndexed(),rightGeo=leftGeo.clone();leftGeo.translate(-13,4.5,0);rightGeo.translate(13,4.5,0);
+ const walled={...stand,height:10,mesh:[...floorGeo.attributes.position.array,...leftGeo.attributes.position.array,...rightGeo.attributes.position.array]};
+ group.clear();const wg=new T.Group();wg.userData.productId='custom';ctx.A.build(wg,walled);group.add(wg);ctx.state={products:[walled]};ray.set(new T.Vector3(11,50,0),new T.Vector3(0,-1,0));const inside=ctx.standTarget(product);assert.ok(inside&&!inside.invalid);assert.ok(inside.x+product.width/2<12.8,'product stays inside the side wall');const cachedHit=ctx.standTarget(product);assert.equal(cachedHit.x,inside.x);assert.ok(wg.children[0].geometry.userData.trayBounds.size>0);ray.set(new T.Vector3(25,4,0),new T.Vector3(-1,0,0));assert.equal(ctx.standTarget(product),null,'vertical wall is not a shelf');
+ // The editor exports inclined floors, not just horizontal boxes.
+ const tilted=new T.BoxGeometry(30,.4,20).toNonIndexed();tilted.rotateX(Math.PI/6);tilted.computeBoundingBox();const dims=tilted.boundingBox.getSize(new T.Vector3());
+ group.clear();const inclined={...stand,width:dims.x,height:dims.y,depth:dims.z,mesh:Array.from(tilted.attributes.position.array)},tiltGroup=new T.Group();tiltGroup.userData.productId='custom';ctx.A.build(tiltGroup,inclined);group.add(tiltGroup);ctx.state={products:[inclined]};
+ ray.set(new T.Vector3(0,50,0),new T.Vector3(0,-1,0));const tiltHit=ctx.standTarget(product);assert.ok(tiltHit,'inclined imported floor must accept products');assert.ok(Number.isFinite(tiltHit.y));assert.ok(Math.abs(tiltHit.tilt-Math.PI/6)<.001);assert.equal(tiltHit.trayStandId,'custom');const restored=BoothModel.validateProducts([{...product,...tiltHit,id:'lean',name:'Lean',image:''}])[0];assert.equal(restored.tilt,tiltHit.tilt);
+
+});
+
+
+
+test('drag placement detects the tabletop below raised items and respects nearer panels',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),ctx=vm.createContext({console,AbortController});
+ vm.runInContext(fs.readFileSync('three.js','utf8')+';globalThis.T=THREE;',ctx);const T=ctx.T;
+ ctx.state={table:{enabled:true}};ctx.tableGroup=new T.Group();const top=new T.Mesh(new T.BoxGeometry(180,3,75),new T.MeshBasicMaterial());top.position.y=-1.5;ctx.tableGroup.add(top);
+ ctx.ray=new T.Raycaster(new T.Vector3(20,60,10),new T.Vector3(0,-1,0));ctx.hit=()=>null;
+ const source=fs.readFileSync('booth-tools.js','utf8');vm.runInContext(source.slice(source.indexOf('function placementSurface('),source.indexOf('function groundPoint(')),ctx);
+ const h=ctx.placementSurface({});assert.equal(h.point.y,0);assert.equal(h.object.userData.tabletop,true);
+ const panel={distance:30,object:{userData:{cell:{type:'shelf'}}}};ctx.hit=()=>panel;assert.equal(ctx.placementSurface({}),panel);
+ ctx.state.table.enabled=false;ctx.hit=()=>null;assert.equal(ctx.placementSurface({}),null);
+});
+
+test('stand moves carry attached items through translation and rotation without changing tilt',()=>{const stand={id:'s',kind:'stand',x:10,y:5,z:20,rotation:0},item={id:'p',trayStandId:'s',trayPlane:2,x:13,y:8,z:24,rotation:0,tilt:.3};const result=BoothModel.moveProduct([stand,item],'s',{x:50,y:10,z:60,rotation:Math.PI/2});assert.equal(result[1].x,54);assert.equal(result[1].z,57);assert.equal(result[1].y,13);assert.equal(result[1].tilt,.3);assert.equal(result[1].rotation,Math.PI/2);assert.equal(item.x,13);assert.equal(BoothModel.removeProduct(result,'s')[0].trayStandId,undefined);});
+
+test('back-only tray snapping stays at the rear while allowing sideways placement',()=>{require('./display-editor/product-placement.js');const G={model:{sideX:150},thick:1},s={t:{depth:100}},p={id:'p',width:30,depth:2,gap:2},rear=ProductPlacement.limits(G,s,p).minZ;for(const z of [0,50,99]){const at=ProductPlacement.candidate(G,s,p,{x:0,z},[],[p],null,1,true);assert.equal(at.z,rear);assert.equal(at.reason,'');}const others=[{id:'other',productId:'p',x:0,z:rear}],at=ProductPlacement.candidate(G,s,p,{x:31,z:rear},others,[p],null,1,true);assert.equal(at.z,rear);assert.equal(at.x,32);assert.equal(at.reason,'');});
+
+test('hooks use the cursor ray while trays retain the offset placement ray',()=>{const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync('booth-tools.js','utf8');let direct=false;const line={value:'offset',clone(){return {value:this.value}},copy(q){this.value=q.value}};const ctx=vm.createContext({ray:{ray:line},hit:()=>{line.value='cursor'},standBoundary:()=>false,hookTarget:()=>direct?{hookId:'h'}:null,standTarget:()=>line.value==='offset'?{trayStandId:'s'}:null});vm.runInContext(source.slice(source.indexOf('function accessoryTarget('),source.indexOf('function hookTarget(')),ctx);assert.equal(ctx.accessoryTarget({},{}).tier.trayStandId,'s');assert.equal(line.value,'offset');direct=true;assert.equal(ctx.accessoryTarget({},{}).hook.hookId,'h');assert.equal(line.value,'offset');});
