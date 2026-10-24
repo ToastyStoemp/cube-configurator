@@ -58,7 +58,7 @@ Browser autosaves are local to each origin. Export your local design as JSON bef
 
 ## Booth planning tools
 
-Open the Item editor & library in the Build sidebar to create dimensioned items with optional artwork, or import/export a product library. Dragging an item moves it horizontally at its chosen base height, including shelf or hanging heights. Artwork preserves its proportions. Product geometry is a simple box preview; physical hanging and stability are not simulated.
+Open the Item editor & library in the Build sidebar to create dimensioned items with optional artwork, or import/export a product library. To rotate an item, tap it and use the Turn chip on the 3D view (a quarter turn per tap, one undo step), press R while dragging it, or set degrees in the item editor; items on risers, racks and stands keep following their holder. Dragging an item moves it horizontally at its chosen base height, including shelf or hanging heights. Artwork preserves its proportions. Product geometry is a simple box preview; physical hanging and stability are not simulated.
 
 Select panels and use Move mode to drag the section across the table; enable Duplicate while moving to copy it. Raise/lower moves half a grid height. Table edges snap within 3 cm with a configurable inset; turn snapping off for grid-only movement. Movement rejects overlapping panels and is one undo step. Product positions are independent of panel sections.
 

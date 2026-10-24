@@ -94,6 +94,13 @@ new MutationObserver(syncQuick).observe($('#styleSummary'),{childList:true,chara
 quickButton.onclick=()=>{const open=quickTray.hidden;quickTray.hidden=!open;quickButton.setAttribute('aria-expanded',String(open));};
 document.addEventListener('pointerdown',e=>{if(!quickTray.hidden&&!e.target.closest('.quickStyle')){quickTray.hidden=true;quickButton.setAttribute('aria-expanded','false');}});
 
+/* ---------- Rotate chip: a quarter turn for the tapped item ---------- */
+const rotateChip=document.createElement('button');rotateChip.id='rotateChip';rotateChip.className='rotateChip';rotateChip.hidden=true;$('#viewer').append(rotateChip);
+const activeItem=()=>(state.products||[]).find(q=>q.id===$('#boothProduct').value)||null;
+function syncRotate(){const item=activeItem(),show=!!item&&['add','select'].includes(mode)&&!globalThis.productsLocked;rotateChip.hidden=!show;if(show)rotateChip.textContent=`↻ Turn ${item.name}`;}
+rotateChip.onclick=()=>{const item=activeItem();if(!item)return;const keep={x:item.x,y:item.y,z:item.z,tilt:item.tilt||0,rotation:(item.rotation||0)+Math.PI/2,...(item.trayStandId?{trayStandId:item.trayStandId,trayPlane:item.trayPlane}:{}),...(item.hookId?{hookId:item.hookId,hookOffset:item.hookOffset}:{})};change(()=>{state.products=BoothModel.moveProduct(state.products,item.id,keep);},`${item.name} turned a quarter. Undo turns it back.`);};
+const syncRotateSoon=()=>setTimeout(syncRotate,0);document.addEventListener('statechange',syncRotateSoon);document.addEventListener('modechange',syncRotateSoon);$('#boothProduct').addEventListener('change',syncRotate);window.addEventListener('pointerup',syncRotateSoon,true);window.addEventListener('pointercancel',syncRotateSoon,true);$('#lockProducts').addEventListener('change',syncRotate);syncRotate();
+
 /* ---------- Kit settings, panel size, triangle corners ---------- */
 const kit=()=>({half:true,triangle:false,...(state.kit||{})});
 function syncKit(){const k=kit();$('#kitHalf').checked=k.half;$('#kitTriangle').checked=k.triangle;$('#triangleTools').hidden=!k.triangle;}
