@@ -1,6 +1,8 @@
 # Cube Studio — artist alley booth planner
 
-Run `python -m http.server 8766 --bind 127.0.0.1` and open http://127.0.0.1:8766.
+**Try it:** https://toastystoemp.github.io/cube-configurator/
+
+To run locally, run `python -m http.server 8766 --bind 127.0.0.1` and open http://127.0.0.1:8766.
 
 Every design starts on a convention table (6 ft by default; 4 ft, 8 ft and half-table presets are in the Table tab). In Build mode, hover a panel edge and drag outward. Extensions snap to half-panel increments: 0.5, 1, 1.5 and more. Full lengths are split into separate full panels plus a half panel for any remainder; the edge's other dimension is preserved. Release to commit the green preview; red means overlap or out of bounds. Escape cancels. A whole drag is one undo step. Free edges show faint pull handles when you hover a panel, or always on touch screens.
 
@@ -37,6 +39,8 @@ On touch screens and narrow windows a style chip sits on the 3D view in Build an
 On laptops, trackpad pinch zooms (including Safari's gesture events), vertical scroll zooms, horizontal scroll pans sideways and Shift-scroll pans in both directions. Firefox's line-based wheel deltas are normalised. Camera renders are coalesced to one per animation frame.
 
 ## GitHub Pages
+
+The live site is published at https://toastystoemp.github.io/cube-configurator/ from the `master` branch.
 
 This is a static site with local, relative asset paths, including its vendored Three.js library. It works under a repository subpath without a server-side application or npm install.
 
