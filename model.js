@@ -41,10 +41,12 @@ function tableSettings(raw){
  if(!raw||typeof raw.enabled!=='boolean')throw Error('Invalid table settings.');
  const result={enabled:raw.enabled};for(const [key,min,max] of [['width',30,400],['depth',20,200],['height',30,120],['x',-1000,1000],['z',-1000,1000]]){if(!Number.isFinite(raw[key])||raw[key]<min||raw[key]>max)throw Error('Invalid table '+key);result[key]=raw[key];}return result;
 }
+function tableItem(raw){if(!raw||typeof raw!=='object')throw Error('Invalid table.');const result={};for(const [key,min,max,fallback] of [['width',30,400],['depth',20,200],['height',30,120,74],['x',-1000,1000,0],['z',-1000,1000,0]]){const value=raw[key]===undefined?fallback:raw[key];if(!Number.isFinite(value)||value<min||value>max)throw Error('Invalid table '+key);result[key]=value;}result.rotation=raw.rotation===90?90:0;if(raw.cloth!==undefined&&raw.cloth!==null&&raw.cloth!==''){if(typeof raw.cloth!=='string'||!/^#[0-9a-f]{6}$/i.test(raw.cloth))throw Error('Invalid table cloth colour');result.cloth=raw.cloth.toLowerCase();}return result;}
+function tablesOf(raw){if(raw.tables!==undefined){if(!Array.isArray(raw.tables)||raw.tables.length>8)throw Error('A design supports up to 8 tables.');return raw.tables.map(tableItem);}if(raw.table!==undefined){const legacy=tableSettings(raw.table);return legacy.enabled?[tableItem(legacy)]:[];}return undefined;}
 function validatePanels(raw){
  if(!Array.isArray(raw.panels)||raw.panels.length>1500)throw Error('A design supports up to 1500 panels.');
  const seen=new Set();const list=raw.panels.map(p=>{if(!p||!['side','shelf','back'].includes(p.type)||![p.x,p.y,p.z].every(v=>Number.isFinite(v))||![p.u??1,p.v??1].every(v=>v===.5||v===1)||Math.abs(p.x)>31||p.y<0||p.y>31||Math.abs(p.z)>31)throw Error('Invalid panel position.');if(!['mesh','plastic'].includes(p.material)||!/^#[0-9a-f]{6}$/i.test(p.color))throw Error('Invalid panel appearance.');const id=panelKey(p);if(seen.has(id))throw Error('Duplicate panel.');seen.add(id);if(p.cut!==undefined&&(![0,1,2,3].includes(p.cut)||(p.u??1)!==1||(p.v??1)!==1))throw Error('Triangle panels must be full size with a cut corner of 0-3.');return {type:p.type,x:p.x,y:p.y,z:p.z,material:p.material,color:p.color,...(p.u!==undefined?{u:p.u}:{}),...(p.v!==undefined?{v:p.v}:{}),...(p.cut!==undefined?{cut:p.cut}:{})};});
- return {schema:'cube-studio',version:2,name:String(raw.name||'My booth display').slice(0,80),width:raw.width,height:raw.height,depth:raw.depth,panels:list,...(raw.products!==undefined?{products:BoothModel.validateProducts(raw.products)}:{}),...(raw.table!==undefined?{table:tableSettings(raw.table)}:{}),...(raw.kit!==undefined?{kit:kitSettings(raw.kit)}:{})};
+ return {schema:'cube-studio',version:2,name:String(raw.name||'My booth display').slice(0,80),width:raw.width,height:raw.height,depth:raw.depth,panels:list,...(raw.products!==undefined?{products:BoothModel.validateProducts(raw.products)}:{}),...(tablesOf(raw)!==undefined?{tables:tablesOf(raw)}:{}),...(raw.kit!==undefined?{kit:kitSettings(raw.kit)}:{})};
 }
 function migrate(raw){const s=validate(raw);return s.version===2?s:{schema:s.schema,version:2,name:s.name,width:s.width,height:s.height,depth:s.depth,panels:panels(s)};}
 function overlaps(a,b){if(a.type!==b.type)return false;const axes=a.type==='side'?['z','y','x']:a.type==='shelf'?['x','z','y']:['x','y','z'];const [u,v,n]=axes;return a[n]===b[n]&&a[u]<b[u]+(b.u||1)-1e-6&&a[u]+(a.u||1)>b[u]+1e-6&&a[v]<b[v]+(b.v||1)-1e-6&&a[v]+(a.v||1)>b[v]+1e-6;}
@@ -80,5 +82,5 @@ function candidates(state,type){
  if(vertices(q).filter(v=>corners.has(v.join(','))).length>=2)out.set(id,q);
  }}return [...out.values()];
 }
-scope.CubeModel={key,validate,panels,inventory,panelKey,vertices,corners,kitSettings,migrate,candidates,overlaps,extension,edgeExtension,trianglePull,retraction,addAndMerge,alignTable};
+scope.CubeModel={key,validate,panels,inventory,panelKey,vertices,corners,kitSettings,tableItem,migrate,candidates,overlaps,extension,edgeExtension,trianglePull,retraction,addAndMerge,alignTable};
 })(globalThis);
