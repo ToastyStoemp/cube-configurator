@@ -45,3 +45,6 @@ header{margin-bottom:6px}.views{display:flex;gap:7px;flex-wrap:wrap}#helpButton{
 @media(pointer:coarse),(max-width:650px){.quickStyle:not([hidden]){display:flex}}
 @media(max-width:650px){.controls{display:none}.quickStyle{bottom:12px}#viewer.coaching .quickStyle{display:none}}
 @media(min-width:651px) and (max-height:640px){.quickStyle{bottom:10px}}
+
+/* Table manager */
+.tableList{display:flex;flex-direction:column;gap:6px;margin:8px 0 10px}.tableList button{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;width:100%}.tableList button[aria-pressed=true]{background:#2d5143;color:#fff;border-color:#2d5143}.tableList small{font-size:10px;opacity:.8}#tableEditor{border-top:1px solid #cdd7c5;margin-top:10px;padding-top:4px}[data-units][aria-pressed=true],[data-table-layout][aria-pressed=true]{background:#2d5143;color:#fff;border-color:#2d5143}
