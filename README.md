@@ -8,7 +8,11 @@ The sidebar follows the mode: Build shows the style palette and new-plane tools,
 
 A first-visit tour walks through the table, the edge pull and stocking the display. Booth readiness under the viewer tracks six goals: the display fits the table, it stays within the panels and connectors you own, it is under your convention's height limit (a red plane marks the limit when exceeded), it is stocked with products, it passes a light stability heuristic (raised shelves need support on at least two edges and tall columns need side bracing), and the print sheet is ready. Optional prices give an estimated kit cost. Visitor view puts the camera at standing eye level in the aisle in front of the table.
 
-Grid dimensions in cm apply to the whole design. Mesh/plastic materials can be mixed. Parts and connector counts derive from the actual panels. Structural suitability and vendor connector compatibility are not simulated.
+Panel size in cm applies to the whole design: width is the bay width, height the panel height and depth the shelf depth, so a 30 × 40 kit is set as 30 wide × 40 tall. Presets cover 30 × 30, 35 × 35, 40 wide × 30 and 30 wide × 40 tall. One size per design; mixing sizes in one layout is not supported. Mesh/plastic materials can be mixed. Parts and connector counts derive from the actual panels. Structural suitability and vendor connector compatibility are not simulated.
+
+Your kit, in the Setup tab, records what your panels allow. Turn off half panels and edge pulls snap to whole panels. Turn on triangle panels and Select mode gains Cut corner and Make square: a triangle panel is a full-size square with one corner cut along the diagonal, cut again to turn it. Triangles count separately in the parts list, have three connector corners, print as triangles, and the two edges beside the cut corner cannot be pulled. Kit settings save in the design file.
+
+Landscape phones and short laptop screens use a compact two-column layout so the 3D view fits on the first screen.
 
 Version 2 JSON saves independent panels, including empty layouts. Version 1 cube designs and existing browser autosaves migrate automatically without adding duplicate shared panels. Undo/redo and CSV parts exports remain available. Kit counts, limits and prices are view preferences stored in the browser, not in the design file.
 

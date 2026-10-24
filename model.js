@@ -16,15 +16,18 @@ function panels(state){
  return [...map.values()];
 }
 function inventory(state){
- const list=panels(state),rows=new Map(),corners=new Set();
- for(const p of list){const dims=p.type==='side'?[state.depth*(p.u||1),state.height*(p.v||1)]:p.type==='shelf'?[state.width*(p.u||1),state.depth*(p.v||1)]:[state.width*(p.u||1),state.height*(p.v||1)],id=[...dims.sort((a,b)=>b-a),p.material].join('|');const row=rows.get(id)||{dims,material:p.material,count:0};row.count++;rows.set(id,row);
- for(const v of vertices(p))corners.add(v.join(','));
+ const list=panels(state),rows=new Map(),joints=new Set();
+ for(const p of list){const dims=p.type==='side'?[state.depth*(p.u||1),state.height*(p.v||1)]:p.type==='shelf'?[state.width*(p.u||1),state.depth*(p.v||1)]:[state.width*(p.u||1),state.height*(p.v||1)],shape=p.cut===undefined?'panel':'triangle',id=[...dims.sort((a,b)=>b-a),p.material,shape].join('|');const row=rows.get(id)||{dims,material:p.material,count:0,...(shape==='triangle'?{shape}:{})};row.count++;rows.set(id,row);
+ for(const v of corners(p))joints.add(v.join(','));
  }
  const unsupported=(state.cubes||[]).filter(c=>c.y>0&&!state.cubes.some(q=>q.x===c.x&&q.y===c.y-1&&q.z===c.z)).length;
- return {panels:list.length,full:list.filter(p=>(p.u||1)*(p.v||1)===1).length,half:list.filter(p=>(p.u||1)*(p.v||1)===.5).length,connectors:corners.size,rows:[...rows.values()],unsupported};
+ return {panels:list.length,full:list.filter(p=>(p.u||1)*(p.v||1)===1&&p.cut===undefined).length,half:list.filter(p=>(p.u||1)*(p.v||1)===.5).length,triangles:list.filter(p=>p.cut!==undefined).length,connectors:joints.size,rows:[...rows.values()],unsupported};
 }
 const panelKey=p=>`${p.type}:${p.x},${p.y},${p.z}:${p.u||1},${p.v||1}`;
 function vertices(p){const out=[];for(const a of [0,p.u||1])for(const b of [0,p.v||1])out.push(p.type==='side'?[p.x,p.y+b,p.z+a]:p.type==='shelf'?[p.x+a,p.y,p.z+b]:[p.x+a,p.y+b,p.z]);return out;}
+/* Connector corners: a triangle panel (cut corner 0-3, indexing vertices) has three. */
+function corners(p){return vertices(p).filter((v,i)=>i!==p.cut);}
+function kitSettings(raw){if(!raw||typeof raw!=='object')throw Error('Invalid kit settings.');return {half:raw.half!==false,triangle:raw.triangle===true};}
 function alignTable(state,table,edge){
  const points=state.panels.flatMap(vertices),xs=points.length?points.map(v=>v[0]*state.width):[0,state.width],zs=points.length?points.map(v=>v[2]*state.depth):[0,state.depth],result={...table};
  if(edge==='left')result.x=Math.min(...xs)+table.width/2;
@@ -40,8 +43,8 @@ function tableSettings(raw){
 }
 function validatePanels(raw){
  if(!Array.isArray(raw.panels)||raw.panels.length>1500)throw Error('A design supports up to 1500 panels.');
- const seen=new Set();const list=raw.panels.map(p=>{if(!p||!['side','shelf','back'].includes(p.type)||![p.x,p.y,p.z].every(v=>Number.isFinite(v))||![p.u??1,p.v??1].every(v=>v===.5||v===1)||Math.abs(p.x)>31||p.y<0||p.y>31||Math.abs(p.z)>31)throw Error('Invalid panel position.');if(!['mesh','plastic'].includes(p.material)||!/^#[0-9a-f]{6}$/i.test(p.color))throw Error('Invalid panel appearance.');const id=panelKey(p);if(seen.has(id))throw Error('Duplicate panel.');seen.add(id);return {type:p.type,x:p.x,y:p.y,z:p.z,material:p.material,color:p.color,...(p.u!==undefined?{u:p.u}:{}),...(p.v!==undefined?{v:p.v}:{})};});
- return {schema:'cube-studio',version:2,name:String(raw.name||'My booth display').slice(0,80),width:raw.width,height:raw.height,depth:raw.depth,panels:list,...(raw.products!==undefined?{products:BoothModel.validateProducts(raw.products)}:{}),...(raw.table!==undefined?{table:tableSettings(raw.table)}:{})};
+ const seen=new Set();const list=raw.panels.map(p=>{if(!p||!['side','shelf','back'].includes(p.type)||![p.x,p.y,p.z].every(v=>Number.isFinite(v))||![p.u??1,p.v??1].every(v=>v===.5||v===1)||Math.abs(p.x)>31||p.y<0||p.y>31||Math.abs(p.z)>31)throw Error('Invalid panel position.');if(!['mesh','plastic'].includes(p.material)||!/^#[0-9a-f]{6}$/i.test(p.color))throw Error('Invalid panel appearance.');const id=panelKey(p);if(seen.has(id))throw Error('Duplicate panel.');seen.add(id);if(p.cut!==undefined&&(![0,1,2,3].includes(p.cut)||(p.u??1)!==1||(p.v??1)!==1))throw Error('Triangle panels must be full size with a cut corner of 0-3.');return {type:p.type,x:p.x,y:p.y,z:p.z,material:p.material,color:p.color,...(p.u!==undefined?{u:p.u}:{}),...(p.v!==undefined?{v:p.v}:{}),...(p.cut!==undefined?{cut:p.cut}:{})};});
+ return {schema:'cube-studio',version:2,name:String(raw.name||'My booth display').slice(0,80),width:raw.width,height:raw.height,depth:raw.depth,panels:list,...(raw.products!==undefined?{products:BoothModel.validateProducts(raw.products)}:{}),...(raw.table!==undefined?{table:tableSettings(raw.table)}:{}),...(raw.kit!==undefined?{kit:kitSettings(raw.kit)}:{})};
 }
 function migrate(raw){const s=validate(raw);return s.version===2?s:{schema:s.schema,version:2,name:s.name,width:s.width,height:s.height,depth:s.depth,panels:panels(s)};}
 function overlaps(a,b){if(a.type!==b.type)return false;const axes=a.type==='side'?['z','y','x']:a.type==='shelf'?['x','z','y']:['x','y','z'];const [u,v,n]=axes;return a[n]===b[n]&&a[u]<b[u]+(b.u||1)-1e-6&&a[u]+(a.u||1)>b[u]+1e-6&&a[v]<b[v]+(b.v||1)-1e-6&&a[v]+(a.v||1)>b[v]+1e-6;}
@@ -75,5 +78,5 @@ function candidates(state,type){
  if(vertices(q).filter(v=>corners.has(v.join(','))).length>=2)out.set(id,q);
  }}return [...out.values()];
 }
-scope.CubeModel={key,validate,panels,inventory,panelKey,vertices,migrate,candidates,overlaps,extension,edgeExtension,retraction,addAndMerge,alignTable};
+scope.CubeModel={key,validate,panels,inventory,panelKey,vertices,corners,kitSettings,migrate,candidates,overlaps,extension,edgeExtension,retraction,addAndMerge,alignTable};
 })(globalThis);

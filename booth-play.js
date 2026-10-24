@@ -19,6 +19,16 @@ $('#color').addEventListener('change',applyStyleToSelection);
 /* ---------- Table presets ---------- */
 document.querySelectorAll('[data-table-preset]').forEach(b=>b.onclick=()=>{const [width,depth]=b.dataset.tablePreset.split(',').map(Number);change(()=>{state.table={...currentTable(),enabled:true,width,depth};},`Table set to ${width} × ${depth} cm.`);fit();});
 
+/* ---------- Kit settings, panel size, triangle corners ---------- */
+const kit=()=>({half:true,triangle:false,...(state.kit||{})});
+function syncKit(){const k=kit();$('#kitHalf').checked=k.half;$('#kitTriangle').checked=k.triangle;$('#triangleTools').hidden=!k.triangle;}
+$('#kitHalf').onchange=e=>change(()=>{state.kit={...kit(),half:e.target.checked};},e.target.checked?'Half panels enabled: edge pulls snap to halves.':'Half panels off: edge pulls snap to whole panels.');
+$('#kitTriangle').onchange=e=>change(()=>{state.kit={...kit(),triangle:e.target.checked};},e.target.checked?'Triangle panels enabled: select a panel and cut a corner.':'Triangle panels off.');
+document.querySelectorAll('[data-grid-size]').forEach(b=>b.onclick=()=>{const [width,height,depth]=b.dataset.gridSize.split(',').map(Number);change(()=>{state.width=width;state.height=height;state.depth=depth;},`Panels set to ${width} × ${height} cm, ${depth} cm deep.`);fit();});
+$('#cutCorner').onclick=()=>{const keys=selectionKeys();if(!keys.size)return;let skipped=0;change(()=>state.panels.forEach(p=>{if(!keys.has(CubeModel.panelKey(p)))return;if((p.u||1)!==1||(p.v||1)!==1){skipped++;return;}p.cut=((p.cut??-1)+1)%4;}),`Corner cut on ${keys.size-skipped} panel(s)${skipped?` · ${skipped} half panel(s) skipped`:''}. Cut again to turn it.`);};
+$('#squareAgain').onclick=()=>{const keys=selectionKeys();if(!keys.size)return;change(()=>state.panels.forEach(p=>{if(keys.has(CubeModel.panelKey(p)))delete p.cut;}),'Panels restored to full squares.');};
+document.addEventListener('statechange',syncKit);syncKit();
+
 /* ---------- Settings menu and help ---------- */
 const settingsButton=$('#settingsButton'),settingsMenu=$('#settingsMenu');
 settingsButton.onclick=()=>{const open=settingsMenu.hidden;settingsMenu.hidden=!open;settingsButton.setAttribute('aria-expanded',String(open));};
@@ -42,7 +52,7 @@ const handles=new THREE.Group();scene.add(handles);
 const dotTexture=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),r=g.createRadialGradient(32,32,4,32,32,30);r.addColorStop(0,'rgba(217,153,47,.95)');r.addColorStop(.55,'rgba(217,153,47,.45)');r.addColorStop(1,'rgba(217,153,47,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
 const dotMaterial=new THREE.SpriteMaterial({map:dotTexture,transparent:true,depthTest:false,opacity:.9});
 function freeEdges(panels,all){const counts=new Map(),edges=[];for(const p of all){const v=CubeModel.vertices(p);for(const [i,j] of [[0,1],[0,2],[1,3],[2,3]]){const key=p.type+':'+[v[i],v[j]].map(x=>x.join(',')).sort().join('|');counts.set(key,(counts.get(key)||0)+1);}}
- for(const p of panels){const v=CubeModel.vertices(p);for(const [i,j] of [[0,1],[0,2],[1,3],[2,3]]){const key=p.type+':'+[v[i],v[j]].map(x=>x.join(',')).sort().join('|');if(counts.get(key)===1)edges.push(v[i].map((n,k)=>(n+v[j][k])/2));}}return edges;}
+ for(const p of panels){const v=CubeModel.vertices(p);for(const [i,j] of [[0,1],[0,2],[1,3],[2,3]]){if(p.cut===i||p.cut===j)continue;const key=p.type+':'+[v[i],v[j]].map(x=>x.join(',')).sort().join('|');if(counts.get(key)===1)edges.push(v[i].map((n,k)=>(n+v[j][k])/2));}}return edges;}
 let handleKey='';
 function showHandles(panels){const key=mode!=='add'?'':panels.map(CubeModel.panelKey).join(';');if(key===handleKey)return;handleKey=key;dispose(handles);if(!key)return requestRender();const unit=Math.min(state.width,state.height,state.depth)*.16;for(const mid of freeEdges(panels,state.panels).slice(0,400)){const sprite=new THREE.Sprite(dotMaterial);sprite.position.copy(world(mid));sprite.scale.set(unit,unit,1);sprite.renderOrder=9;handles.add(sprite);}requestRender();}
 function hoverHandles(e){if(mode!=='add'||down||pinch){if(!down&&!pinch)return;return showHandles([]);}if(touchUI)return;const h=hit(e);showHandles(h?[h.object.userData.cell]:[]);}
