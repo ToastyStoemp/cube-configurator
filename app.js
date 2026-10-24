@@ -39,7 +39,7 @@ function fit(){camera.zoom=1;const b=bounds();let minX=b.minX*state.width,maxX=b
 function currentTable(){return tablesOf()[selectedTable]||tablesOf()[0]||null;}
 function renderTable(){dispose(tableGroup);const ts=tablesOf(),tb=tablesBounds();grid.position.y=tb?-tb.height-.5:-.5;if(!ts.length){$('#tableFit').textContent='No table yet. Add one in the Table tab.';return;}
  function part(w,h,d,x,y,z,color,index){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.8}));mesh.position.set(x,y,z);mesh.userData.tableIndex=index;tableGroup.add(mesh);}
- ts.forEach((t,i)=>{const r=tableRect(t);part(r.w,3,r.d,t.x,-1.5,t.z,i===selectedTable&&ts.length>1?'#d4bb93':'#c5aa83',i);for(const x of [-1,1])for(const z of [-1,1])part(3,t.height-3,3,t.x+x*(r.w/2-8),-(t.height+3)/2,t.z+z*(r.d/2-6),'#69736c',i);});
+ ts.forEach((t,i)=>{const r=tableRect(t);part(r.w,3,r.d,t.x,-1.5,t.z,i===selectedTable&&ts.length>1?'#d4bb93':'#c5aa83',i);if(t.cloth)part(r.w+3,t.height-1,r.d+3,t.x,.1-(t.height-1)/2,t.z,t.cloth,i);for(const x of [-1,1])for(const z of [-1,1])part(3,t.height-3,3,t.x+x*(r.w/2-8),-(t.height+3)/2,t.z+z*(r.d/2-6),'#69736c',i);});
  const outside=state.panels.filter(p=>CubeModel.vertices(p).some(v=>!onTables(v[0]*state.width,v[2]*state.depth))).length;
  $('#tableFit').textContent=outside?`${outside} panel(s) extend beyond the table footprint. Check placement and support.`:'Display fits within the table footprint.';
 }

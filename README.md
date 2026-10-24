@@ -72,6 +72,10 @@ Choose Metal display hook or Tiered acrylic stand in the product form. Width/hei
 
 Open display-stand editor launches a bundled local editor in a dialog. Open a saved display-stand JSON there or design a new stand, then choose Add current stand to booth. Actual triangulated geometry is transferred in cm and included in booth saves and product libraries. Transfers are snapshots; re-edit in the embedded editor and transfer again to update the shape. Imported geometry dimensions can also be scaled in the booth product form. The bundled editor is independent of the original project's server and works on GitHub Pages.
 
+### Display systems
+
+The Displays tab holds the gear artists bring besides cube grids: retractable banner stands (33 × 80 in and 24 × 63 in), gridwall panels (2 × 4 ft and 2 × 6 ft), tabletop easels, sign holders, a print bin, riser blocks, a PVC print rack and a clip-on LED light. Banner stands and gridwall stand on the floor: tap a card to put one behind the table, or drag it anywhere on the floor. Easels, signs, bins, risers and racks rest on shelves or the tabletop, and products can be placed on top of a riser. Lights clip to vertical panels like hooks. Banner, easel, sign and rack cards carry artwork, which the item editor can replace. Floor items count toward the height limit from the floor and are left out of the table footprint check. Each table can also wear a tablecloth: pick a colour in the Table tab.
+
 ### Item palette
 
 Drag cards from Products, Hooks, Acrylic, or Custom onto the 3D display. Hooks offer 5/10/15/20 cm presets and attach to vertical panels; acrylic stands offer 2–5 levels and attach to horizontal panels or the tabletop. The full-size preview shows placement before release; Escape cancels. Use Create / edit an item for dimensions, artwork, import/export, and deletion. Transferred custom stands retain their colors and appear as reusable cards. Preset dimensions are editable starting points.
