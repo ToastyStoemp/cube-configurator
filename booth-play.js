@@ -21,6 +21,11 @@ document.querySelectorAll('[data-material],.swatches button').forEach(b=>b.addEv
 $('#color').addEventListener('change',applyStyleToSelection);
 
 /* ---------- Units: the model stays in cm; inputs and readings switch between cm and inches ---------- */
+/* First visit: pick inches for US timezones, centimetres elsewhere. A manual choice in Setup or Settings is kept from then on. */
+const US_ZONES=/^(America\/(New_York|Detroit|Kentucky\/.+|Indiana\/.+|Chicago|Menominee|North_Dakota\/.+|Denver|Boise|Phoenix|Los_Angeles|Anchorage|Juneau|Sitka|Metlakatla|Yakutat|Nome|Adak|Puerto_Rico)|Pacific\/(Honolulu|Guam|Saipan)|US\/.+)$/;
+function detectUnits(zone,language){if(zone)return {units:US_ZONES.test(zone)?'in':'cm',reason:'timezone '+zone};const lang=(language||'').toLowerCase();return {units:lang==='en-us'?'in':'cm',reason:lang?'language '+language:'default'};}
+let unitsNote='';
+if(!plan.unitsChosen){let zone='';try{zone=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch{}const d=detectUnits(zone,navigator.language);if(d.units!==plan.units||!plan.unitsNoticed){plan.units=d.units;unitsNote=`Units set to ${d.units==='in'?'inches':'centimetres'} from your device ${d.reason}. Change them in Setup.`;}plan.unitsNoticed=true;savePlan();}
 const CM_INPUTS=['width','height','depth','tableInset','bpWidth','bpHeight','bpDepth','bpY','heightLimit','tableTopLimit','tableWidth','tableDepth','tableHeight','tableX','tableZ'];
 const valueProp=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value'),labelText=new WeakMap();
 function unitize(el,inches){if(!el||!!el.dataset.unitized===inches)return;if(inches){const cm=valueProp.get.call(el);el.dataset.unitized='1';Object.defineProperty(el,'value',{configurable:true,get(){const raw=valueProp.get.call(el);if(raw==='')return '';const n=Number(raw);return Number.isFinite(n)?String(+(n*2.54).toFixed(4)):raw;},set(v){if(v===''||v===null||v===undefined){valueProp.set.call(el,'');return;}const n=Number(v);valueProp.set.call(el,Number.isFinite(n)?String(+(n/2.54).toFixed(2)):String(v));}});el.value=cm;for(const a of ['min','max']){const v=el.getAttribute(a);if(v!==null){el.dataset['cm'+a]=v;el.setAttribute(a,String(+(Number(v)/2.54).toFixed(2)));}}el.dataset.cmstep=el.getAttribute('step')||'';el.setAttribute('step','any');}
@@ -31,7 +36,7 @@ const lengthPattern=/(-?\d+(?:\.\d+)?(?:\s*[×,]\s*-?\d+(?:\.\d+)?)*)\s*cm\b/g;
 const toInchText=text=>text.replace(lengthPattern,(m,nums)=>nums.replace(/-?\d+(?:\.\d+)?/g,n=>String(+(Number(n)/2.54).toFixed(1)))+' in');
 function convertCards(){document.querySelectorAll('#itemCards small').forEach(s=>{if(s.dataset.cm===undefined)s.dataset.cm=s.textContent;const next=plan.units==='in'?toInchText(s.dataset.cm):s.dataset.cm;if(s.textContent!==next)s.textContent=next;});}
 function applyUnits(){globalThis.displayUnits=plan.units;const inches=plan.units==='in';CM_INPUTS.forEach(id=>unitize($('#'+id),inches));relabel();convertCards();document.querySelectorAll('[data-units]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.units===plan.units)));$('#unitsToggle').textContent='Units: '+plan.units;}
-function setUnits(units){plan.units=units;savePlan();applyUnits();render();readiness();syncTables();$('#status').textContent=units==='in'?'Showing inches. Designs are still stored in centimetres.':'Showing centimetres.';}
+function setUnits(units){plan.units=units;plan.unitsChosen=true;savePlan();applyUnits();render();readiness();syncTables();$('#status').textContent=units==='in'?'Showing inches. Designs are still stored in centimetres.':'Showing centimetres.';}
 document.querySelectorAll('[data-units]').forEach(b=>b.onclick=()=>setUnits(b.dataset.units));
 $('#unitsToggle').onclick=()=>setUnits(plan.units==='in'?'cm':'in');
 const cards=$('#itemCards');if(cards)new MutationObserver(convertCards).observe(cards,{childList:true,subtree:true});
@@ -165,7 +170,7 @@ function readiness(){const inv=CubeModel.inventory(state),products=state.product
  updateLimitPlane();requestRender();}
 document.addEventListener('statechange',()=>{markSaved();['count','panels','connectors'].forEach(countUp);readiness();});
 ['count','panels','connectors'].forEach(id=>shown[id]=Number($('#'+id).textContent));
-applyUnits();syncTables();readiness();
+applyUnits();if(plan.units==='in')render();syncTables();readiness();if(unitsNote)$('#status').textContent=unitsNote;
 
 /* ---------- First-visit tour ---------- */
 const coach=$('#coach'),viewer=$('#viewer');

@@ -168,3 +168,8 @@ const up=M.trianglePull(ends,'x',1,1);assert.deepEqual([up.type,up.x,up.y,up.z,u
 const down=M.trianglePull(ends,'x',1,0);assert.equal(down.cut,3,'pulling toward the bottom end cuts the top far corner (2,1,0)');
 const back=M.trianglePull(ends,'x',-1,1);assert.equal(back.x,0,'negative pulls extend the other way');assert.equal(back.cut,0,'the cut corner is on the far (x=0) side at the bottom');
 assert.deepEqual(M.inventory({schema:'cube-studio',version:2,width:30,height:30,depth:30,panels:[up]}).rows[0].shape,'triangle');});
+
+test('units are detected from the device timezone, with language as a fallback',()=>{const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync('booth-play.js','utf8'),start=source.indexOf('const US_ZONES='),end=source.indexOf('let unitsNote='),ctx=vm.createContext({});vm.runInContext(source.slice(start,end),ctx);const detect=(z,l)=>vm.runInContext('detectUnits',ctx)(z,l);
+for(const zone of ['America/New_York','America/Chicago','America/Los_Angeles','America/Phoenix','America/Indiana/Indianapolis','America/Kentucky/Louisville','America/Anchorage','Pacific/Honolulu','America/Puerto_Rico'])assert.equal(detect(zone,'en-US').units,'in',zone);
+for(const zone of ['Europe/Amsterdam','Europe/London','America/Toronto','America/Mexico_City','America/Sao_Paulo','Asia/Tokyo','Australia/Sydney','UTC'])assert.equal(detect(zone,'en-US').units,'cm',zone+' is metric even with a US language');
+assert.equal(detect('','en-US').units,'in','no timezone: US English means inches');assert.equal(detect('','nl-BE').units,'cm');assert.equal(detect('','').units,'cm');assert.match(detect('America/Chicago','').reason,/timezone America\/Chicago/);});
