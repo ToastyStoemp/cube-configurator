@@ -21,6 +21,8 @@ jobs:
         run: |
           node --check app.js
           node --check workspace-ui.js
+          node --check booth-tools.js
+          node --check booth-play.js
       - name: Package public site files
         run: node build-site.cjs
       - uses: actions/upload-pages-artifact@v4
