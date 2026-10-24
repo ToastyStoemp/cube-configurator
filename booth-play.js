@@ -19,6 +19,17 @@ $('#color').addEventListener('change',applyStyleToSelection);
 /* ---------- Table presets ---------- */
 document.querySelectorAll('[data-table-preset]').forEach(b=>b.onclick=()=>{const [width,depth]=b.dataset.tablePreset.split(',').map(Number);change(()=>{state.table={...currentTable(),enabled:true,width,depth};},`Table set to ${width} × ${depth} cm.`);fit();});
 
+/* ---------- Quick style chip on the viewer (touch and narrow screens) ---------- */
+const quick=document.createElement('div');quick.className='quickStyle';quick.innerHTML='<button id="quickStyle" aria-expanded="false" aria-controls="quickTray" aria-label="Panel style"><i class="sample"></i><span></span></button><div id="quickTray" hidden><div class="quickSwatches" role="group" aria-label="Colours"></div><div class="quickMaterials" role="group" aria-label="Finish"></div></div>';
+$('#viewer').append(quick);
+const quickButton=$('#quickStyle'),quickTray=$('#quickTray'),quickSwatches=quick.querySelector('.quickSwatches'),quickMaterials=quick.querySelector('.quickMaterials');
+for(const source of document.querySelectorAll('.swatches [data-color]')){const b=document.createElement('button');b.dataset.color=source.dataset.color;b.title=source.title;b.setAttribute('aria-label',source.title);b.style.setProperty('--swatch',source.dataset.color);b.onclick=()=>{source.click();};quickSwatches.append(b);}
+for(const source of document.querySelectorAll('[data-material]')){const b=document.createElement('button');b.dataset.material=source.dataset.material;b.textContent=source.dataset.material==='mesh'?'Mesh':'Plastic';b.onclick=()=>{source.click();};quickMaterials.append(b);}
+function syncQuick(){const style=appearance(),sample=quickButton.querySelector('.sample');sample.style.setProperty('--paint',style.color);sample.classList.toggle('mesh',style.material==='mesh');quickButton.querySelector('span').textContent=$('#styleSummary').textContent;quickSwatches.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===style.color)));quickMaterials.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.material===style.material)));quick.hidden=!['add','select'].includes(mode);}
+new MutationObserver(syncQuick).observe($('#styleSummary'),{childList:true,characterData:true,subtree:true});document.addEventListener('modechange',syncQuick);syncQuick();
+quickButton.onclick=()=>{const open=quickTray.hidden;quickTray.hidden=!open;quickButton.setAttribute('aria-expanded',String(open));};
+document.addEventListener('pointerdown',e=>{if(!quickTray.hidden&&!e.target.closest('.quickStyle')){quickTray.hidden=true;quickButton.setAttribute('aria-expanded','false');}});
+
 /* ---------- Kit settings, panel size, triangle corners ---------- */
 const kit=()=>({half:true,triangle:false,...(state.kit||{})});
 function syncKit(){const k=kit();$('#kitHalf').checked=k.half;$('#kitTriangle').checked=k.triangle;$('#triangleTools').hidden=!k.triangle;}

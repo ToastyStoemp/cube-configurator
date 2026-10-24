@@ -28,6 +28,14 @@ Edge dragging chooses an extension direction from the mouse movement, including 
 
 Choose material samples and colour swatches before building. Select mode supports Shift-click and brush-drag multi-selection, Select all, and Same style. Picking a style with a selection active applies it in one undo step. Assembly animations and optional sound remain.
 
+## Phones, tablets and laptops
+
+On screens narrower than 650 px the 3D view stays pinned at the top while the mode buttons, sidebar sections, readiness panel and parts list scroll beneath it. Landscape phones and screens under 640 px tall use a compact two-column layout. One finger orbits, two fingers pan and pinch to zoom. Panel edges and corners accept a wider finger tolerance, and in Select mode each tap adds or removes a panel from the selection. Tap an item card to place it on the table, or drag the card's picture onto the display; swiping on the card text scrolls the list. Touch targets are at least 44 px and inputs use 16 px text so iOS does not zoom on focus.
+
+On touch screens and narrow windows a style chip sits on the 3D view in Build and Select modes: tap it to swap colours and finishes without scrolling to the sidebar. In Select mode the choice restyles the selection immediately.
+
+On laptops, trackpad pinch zooms (including Safari's gesture events), vertical scroll zooms, horizontal scroll pans sideways and Shift-scroll pans in both directions. Firefox's line-based wheel deltas are normalised. Camera renders are coalesced to one per animation frame.
+
 ## GitHub Pages
 
 This is a static site with local, relative asset paths, including its vendored Three.js library. It works under a repository subpath without a server-side application or npm install.
