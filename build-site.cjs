@@ -1,5 +1,5 @@
 const fs=require('node:fs'),path=require('node:path');
-const files=['index.html','style.css','three.js','model.js','app.js','workspace-ui.js','booth-model.js','booth-tools.js','accessories.js','product-art.js','THREE-LICENSE.txt','.nojekyll'];
+const files=['index.html','style.css','three.js','model.js','app.js','workspace-ui.js','booth-model.js','booth-tools.js','booth-play.js','accessories.js','product-art.js','THREE-LICENSE.txt','.nojekyll'];
 const out=path.join(__dirname,'_site');fs.mkdirSync(out,{recursive:true});
 const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
 for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){const asset=match[1].split('?')[0];if(asset.startsWith('/')||asset.includes('://')||(!files.includes(asset)&&asset!=='display-editor/product-placement.js'))throw Error('Nonportable or unpackaged asset: '+asset);}
