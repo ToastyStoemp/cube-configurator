@@ -146,3 +146,12 @@ const inv=M.inventory(s);assert.equal(inv.triangles,1);assert.equal(inv.full,1);
 assert.throws(()=>M.migrate({...base,panels:[{...base.panels[0],cut:4}]}),/cut corner/);assert.throws(()=>M.migrate({...base,panels:[{...base.panels[0],u:.5,cut:0}]}),/full size/);assert.throws(()=>M.migrate({...base,kit:'yes'}),/kit/i);
 const noKit=M.migrate({...base,kit:undefined});assert.equal(noKit.kit,undefined);
 const ends=[[1,0,0],[1,1,0]];assert.deepEqual(M.edgeExtension(ends,'x',1,1.4,true).map(p=>p.u||1),[1],'without half panels a 1.4 pull snaps to one whole panel');assert.deepEqual(M.edgeExtension(ends,'x',1,1.4,false).map(p=>p.u||1),[1,.5],'with half panels it adds a half');});
+
+test('corner pulls pick the panel by pull direction, cut inward and restore outward',()=>{const fs=require('node:fs'),vm=require('node:vm'),source=fs.readFileSync('app.js','utf8'),start=source.indexOf('function cornerChoice('),end=source.indexOf('function cornerMarker(',start),ctx=vm.createContext({});vm.runInContext(source.slice(start,end),ctx);const choose=(c,x,y)=>vm.runInContext('cornerChoice',ctx)(c,x,y);
+const right={type:'back',x:0,y:0,z:0},down={type:'shelf',x:0,y:0,z:0},candidates=[{p:right,index:0,dx:60,dy:-60},{p:down,index:1,dx:60,dy:60}];
+assert.equal(choose(candidates,3,-3),null,'a tiny movement does nothing');
+assert.equal(choose(candidates,40,-40).p,right,'pulling up and right picks the panel whose centre lies that way');assert.equal(choose(candidates,40,-40).inward,true);assert.ok(choose(candidates,18,-18).progress<1,'a short pull is not committed');assert.equal(choose(candidates,40,-40).progress,1,'a long pull commits');
+assert.equal(choose(candidates,40,40).p,down,'pulling down and right picks the shelf');
+assert.equal(choose(candidates,40,0),null,'a pull between two diagonals is ambiguous');
+assert.equal(choose(candidates,-40,40),null,'pulling outward from a square corner does nothing');
+const cut=[{p:{...right,cut:0},index:0,dx:60,dy:-60}];assert.equal(choose(cut,40,-40),null,'pulling a cut corner inward does nothing');assert.equal(choose(cut,-40,40).inward,false,'pulling a cut corner outward restores');});
