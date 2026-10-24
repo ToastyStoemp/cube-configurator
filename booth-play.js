@@ -58,19 +58,6 @@ function isoThumb(cubes){const s=9,P=(x,y,z)=>[(x-z)*s*.866,(x+z)*s*.5-y*s];if(!
  return `<svg viewBox="${minX-(size-w)/2} ${minY-(size-h)/2} ${size} ${size}" aria-hidden="true">${faces.map(([poly,fill])=>`<polygon points="${poly.map(p=>p.join(',')).join(' ')}" fill="${fill}" stroke="#2d5143" stroke-width=".7" stroke-linejoin="round"/>`).join('')}</svg>`;}
 document.querySelectorAll('[data-preset]').forEach(b=>{const shape=PRESET_SHAPES[b.dataset.preset];const thumb=b.querySelector('.thumb');if(thumb&&shape)thumb.innerHTML=isoThumb(b.dataset.preset==='single'?[]:shape.cubes);});
 
-/* ---------- Pull handles on free edges ---------- */
-const handles=new THREE.Group();scene.add(handles);
-const dotTexture=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),r=g.createRadialGradient(32,32,4,32,32,30);r.addColorStop(0,'rgba(217,153,47,.95)');r.addColorStop(.55,'rgba(217,153,47,.45)');r.addColorStop(1,'rgba(217,153,47,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
-const dotMaterial=new THREE.SpriteMaterial({map:dotTexture,transparent:true,depthTest:false,opacity:.9});
-function freeEdges(panels,all){const counts=new Map(),edges=[];for(const p of all){const v=CubeModel.vertices(p);for(const [i,j] of [[0,1],[0,2],[1,3],[2,3]]){const key=p.type+':'+[v[i],v[j]].map(x=>x.join(',')).sort().join('|');counts.set(key,(counts.get(key)||0)+1);}}
- for(const p of panels){const v=CubeModel.vertices(p);for(const [i,j] of [[0,1],[0,2],[1,3],[2,3]]){if(p.cut===i||p.cut===j)continue;const key=p.type+':'+[v[i],v[j]].map(x=>x.join(',')).sort().join('|');if(counts.get(key)===1)edges.push(v[i].map((n,k)=>(n+v[j][k])/2));}}return edges;}
-let handleKey='';
-function showHandles(panels){const key=mode!=='add'?'':panels.map(CubeModel.panelKey).join(';');if(key===handleKey)return;handleKey=key;dispose(handles);if(!key)return requestRender();const unit=Math.min(state.width,state.height,state.depth)*.16;for(const mid of freeEdges(panels,state.panels).slice(0,400)){const sprite=new THREE.Sprite(dotMaterial);sprite.position.copy(world(mid));sprite.scale.set(unit,unit,1);sprite.renderOrder=9;handles.add(sprite);}requestRender();}
-function hoverHandles(e){if(mode!=='add'||down||pinch){if(!down&&!pinch)return;return showHandles([]);}if(touchUI)return;const h=hit(e);showHandles(h?[h.object.userData.cell]:[]);}
-canvas.addEventListener('pointermove',hoverHandles);canvas.addEventListener('pointerleave',()=>{if(!touchUI)showHandles([]);});canvas.addEventListener('pointerup',()=>{if(touchUI)showHandles(state.panels);});
-function touchHandles(){if(touchUI)showHandles(mode==='add'?state.panels:[]);else if(mode!=='add')showHandles([]);}
-document.addEventListener('modechange',touchHandles);document.addEventListener('statechange',touchHandles);touchHandles();
-
 /* ---------- Visitor view ---------- */
 $('#visitor').onclick=()=>{const b=bounds(),t=tableOf(),cx=(b.minX+b.maxX)/2*state.width,cz=(b.minZ+b.maxZ)/2*state.depth,cy=Math.max(10,b.maxY*state.height*.45),frontZ=t?t.z+t.depth/2:b.maxZ*state.depth,eye=155-(t?t.height:74),dz=frontZ+120-cz,dist=Math.hypot(dz,eye-cy);target.set(cx,cy,cz);orbit.yaw=0;orbit.pitch=Math.asin((eye-cy)/dist);orbit.distance=dist;camera.zoom=1;pan.set(0,0);updateCamera();$('#tip').textContent='Visitor view · standing eye level, 120 cm in front of the table';};
 

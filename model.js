@@ -54,6 +54,8 @@ function edgeExtension(ends,axis,sign,length,full=false){
  length=Math.min(10,Math.max(0,Math.round(length/step)*step));const out=[];
  for(let offset=0;offset<length;){const size=Math.min(1,length-offset),lo=ends[0].map((n,i)=>Math.min(n,ends[1][i]));lo[a]=ends[0][a]+(sign>0?offset:-offset-size);const dims=[];dims[a]=size;dims[t]=cross;out.push({type,x:lo[0],y:lo[1],z:lo[2],u:dims[axes[0]],v:dims[axes[1]]});offset+=size;}return out;
 }
+/* A diagonal pull from a full edge: one full panel outward with the far corner on the far side from `towardEnd` cut off. */
+function trianglePull(ends,axis,sign,towardEnd){const q=edgeExtension(ends,axis,sign,1,true)[0];if(!q)return null;const t=ends[0].findIndex((n,i)=>n!==ends[1][i]),k={x:0,y:1,z:2}[axis],far=sign>0?q[axis]+1:q[axis],away=ends[towardEnd?0:1][t],cut=vertices(q).findIndex(v=>v[k]===far&&v[t]===away);return cut<0?null:{...q,cut};}
 function addAndMerge(panels,additions){
  const result=panels.map(p=>({...p})),placed=[];let merged=0;
  for(const addition of additions){let p={...addition};const axes=p.type==='side'?['z','y','x']:p.type==='shelf'?['x','z','y']:['x','y','z'];
@@ -78,5 +80,5 @@ function candidates(state,type){
  if(vertices(q).filter(v=>corners.has(v.join(','))).length>=2)out.set(id,q);
  }}return [...out.values()];
 }
-scope.CubeModel={key,validate,panels,inventory,panelKey,vertices,corners,kitSettings,migrate,candidates,overlaps,extension,edgeExtension,retraction,addAndMerge,alignTable};
+scope.CubeModel={key,validate,panels,inventory,panelKey,vertices,corners,kitSettings,migrate,candidates,overlaps,extension,edgeExtension,trianglePull,retraction,addAndMerge,alignTable};
 })(globalThis);
