@@ -26,6 +26,8 @@ Choose material samples and colour swatches before building. Select mode support
 
 On screens narrower than 650 px the 3D view stays pinned at the top while the mode buttons, sidebar sections and parts list scroll beneath it. One finger orbits, two fingers pan and pinch to zoom. Panel edges accept a wider finger tolerance, and in Select mode each tap adds or removes a panel from the selection, since there is no Shift key. Tap an item card to place it on the table, or drag the card's picture onto the display; swiping on the card text scrolls the list. Touch targets are at least 44 px and inputs use 16 px text so iOS does not zoom on focus. Keyboard shortcuts such as R and Shift remain desktop-only.
 
+On laptops, trackpad pinch zooms (including Safari's gesture events), vertical scroll zooms, horizontal scroll pans sideways and Shift-scroll pans in both directions. Firefox's line-based wheel deltas are normalised. Camera renders are coalesced to one per animation frame, so high-rate trackpad and pointer events no longer trigger a render each.
+
 ## GitHub Pages
 
 This is a static site with local, relative asset paths, including its vendored Three.js library. It works under a repository subpath without a server-side application or npm install.
