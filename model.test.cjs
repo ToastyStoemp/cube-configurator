@@ -155,3 +155,9 @@ assert.equal(choose(candidates,40,40).p,down,'pulling down and right picks the s
 assert.equal(choose(candidates,40,0),null,'a pull between two diagonals is ambiguous');
 assert.equal(choose(candidates,-40,40),null,'pulling outward from a square corner does nothing');
 const cut=[{p:{...right,cut:0},index:0,dx:60,dy:-60}];assert.equal(choose(cut,40,-40),null,'pulling a cut corner inward does nothing');assert.equal(choose(cut,-40,40).inward,false,'pulling a cut corner outward restores');});
+
+test('a diagonal edge pull adds one full triangle with the cut on the side away from the pull',()=>{const ends=[[1,0,0],[1,1,0]];
+const up=M.trianglePull(ends,'x',1,1);assert.deepEqual([up.type,up.x,up.y,up.z,up.u,up.v],['back',1,0,0,1,1]);assert.equal(up.cut,2,'pulling toward the top end keeps the top far corner, so the bottom far corner (2,0,0) is cut');assert.deepEqual(M.corners(up).map(v=>v.join()),['1,0,0','1,1,0','2,1,0']);
+const down=M.trianglePull(ends,'x',1,0);assert.equal(down.cut,3,'pulling toward the bottom end cuts the top far corner (2,1,0)');
+const back=M.trianglePull(ends,'x',-1,1);assert.equal(back.x,0,'negative pulls extend the other way');assert.equal(back.cut,0,'the cut corner is on the far (x=0) side at the bottom');
+assert.deepEqual(M.inventory({schema:'cube-studio',version:2,width:30,height:30,depth:30,panels:[up]}).rows[0].shape,'triangle');});
